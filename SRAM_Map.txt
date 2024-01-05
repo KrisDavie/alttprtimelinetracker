@@ -1,0 +1,581 @@
+Overview
+This document is intended to be an SRAM reference for the randomizer base ROM. The base ROM expands the SRAM size to 32k and removes the last two save files. Credit to MathOnNapkins, the editors of the vanilla ALttP wiki, and the randomizer ROM developers who have documented nearly all of this information elsewhere.
+
+Notes
+
+Offsets on this page start from $7EF000* in WRAM or at 0x00* in an .sram file. The ROM is mapped as LoROM, so the cartridge's SRAM is located at $700000*.
+When bytes are laid out as individual bits, this indicates either bit flags or densely packed integers (i.e., smaller than one byte.)
+Values bigger than one byte are little-endian (e.g. a 16-bit number that is 0x55* 0xAA* in a hex editor or debugger is actually #$AA55.)
+SRAM Map
+Room Data: 0x000* to 0x24F*
+There are 296 (0x128\*) rooms in in the ROM. Each room's data occupies one word, or two bytes.
+
+High Byte
+128 64 32 16 8 4 2 1
+d d d d b k c/k c/r
+Low Byte
+128 64 32 16 8 4 2 1
+c c c c q q q q
+
+d - door opened (either unlocked, bombed or other means)
+b - boss battle won
+k - key or item (such as a 300 rupee gift)
+c - chest, big key chest, or big key lock. Any combination of them totaling to 6 is valid.
+r - special rupee tiles, whether they've been obtained or not.
+q - quadrants visited:
+The quadrant bits corresponds to quadrants 4, 3, 2, and 1 in that order which is also how the quadrants are laid out on a tile from left to right (upper left, upper right, lower left, lower right), so if quadrants 4 and 1 have been "seen" by Link, then qqqq will look like 1001.
+
+Unused: 0x250* to 0x27F*
+Presumed unused in both vanilla and randomizer.
+Overworld Event Information: 0x280* to 0x2FF*
+Each area occupies one byte.
+
+? h o ? ? ? s ?
+
+o - If set, the area will draw its designated overlay when you enter it. e.g. If you're triggered misery mire then the entrance shows up there the next time you enter that area. You can view overlays in the latest release of Hyrule Magic. Other overlays include stairs leading underground, and the removal of the weather vane after it has exploded.
+s - If set, the area will draw its secondary overlay when you enter it.
+h - If set, free-standing item has been collected in this area already. Also used for a handful of other sprites.
+? - Unknown, possibly unused.
+Shop Purchase Counts: 0x302* to 0x33F*
+The randomizer ROM uses new shop code to handle loading and configuration of shops which allows the higher-level item and entrance randomizers to use easy abstractions for changing them. The higher-level randomizers can dictate a certain number of times that a shop item can be re-purchased (e.g. you can only buy capacity upgrades seven times.) The bytes here are used to count how many times a single item in a shop has been purchased. They are dynamically assigned at generation time, which is to say that any single byte should not be considered statically bound to a certain item in a specific shop. Take-Any caves as well as the old man with the sword in Retro world state are considered shops in this context.
+
+Note 1: This is noted as a "temporary home" for the shop purchase counts in the base rom's source code
+Note 2: Jumping into deep water without flippers and being placed back on land on the Hobo and Zora's Domain maps are known to overwrite 0x302* and 0x304* respectively. This has no effect if a shop item whose purchase count is located at these addresses can always be repurchased, but will lead to unintended behavior if the item can only be purchased a limited amount of times.
+Items & Equipment: 0x340* to 0x3F0*
+Address Item Values Notes
+0x340* Bow 0x00* - Nothing 0x01* - Bow 0x02* - Bow & Arrows 0x03* - Silver Arrow Bow 0x04* - Bow & Silver Arrows
+0x341* Boomerang 0x00* - Nothing 0x01* - Blue 0x02* - Red
+0x342* Hookshot 0x00* - No 0x01* - Yes
+0x343* Bombs How many bombs you have Can exceed 0x32*, up to 0xFF*.
+0x344* Magic Powder 0x00* - Nothing 0x01* - Mushroom 0x02* - Magic Powder
+0x345* Fire Rod 0x00* - No 0x01* - Yes
+0x346* Ice Rod 0x00* - No 0x01* - Yes
+0x347* Bombos Medallion 0x00* - No 0x01* - Yes
+0x348* Ether Medallion 0x00* - No 0x01* - Yes
+0x349* Quake Medallion 0x00* - No 0x01* - Yes
+0x34A* Lamp 0x00* - No 0x01* - Yes
+0x34B* Magic Hammer 0x00* - No 0x01* - Yes
+0x34C* Flute 0x00* - Nothing 0x01* - Shovel 0x02* - Flute 0x03* - Flute & Bird
+0x34D* Bug-Catching Net 0x00* - No 0x01* - Yes
+0x34E* Book of Mudora 0x00* - No 0x01* - Yes
+0x34F* Bottle Index 0x00* - Nothing 0x01* - Bottle 1 ($7EF35C*) 0x02* - Bottle 2 ($7EF35D*) 0x03* - Bottle 3 ($7EF35E*) 0x04* - Bottle 4 ($7EF35F*)
+0x350* Cane of Somaria 0x00* - No 0x01* - Yes
+0x351* Cane of Byrna 0x00* - No 0x01* - Yes
+0x352* Magic Cape 0x00* - No 0x01* - Yes
+0x353* Magic Mirror 0x00* - Nothing 0x01* - Magic Scroll 0x02* - Magic Mirror
+0x354* Gloves 0x00* - Nothing 0x01* - Power Glove 0x02* - Titan's Mitt
+0x355* Pegasus Boots 0x00* - No 0x01* - Yes See $379.
+0x356* Zora's Flippers 0x00* - No 0x01* - Yes See $379.
+0x357* Moon Pearl 0x00* - No 0x01* - Yes
+0x358* Presumed Unused
+0x359* Sword 0x00* - No Sword 0x01* - Fighters' Sword 0x02* - Master Sword 0x03* - Tempered Sword 0x04* - Golden Sword
+0x35A* Shield 0x00* - No Shield 0x01* - Fighters' Shield 0x02* - Fire Shield 0x03* - Mirror Shield
+0x35B* Armor 0x00* - Green Mail 0x01* - Blue Mail 0x02* - Red Mail
+0x35C* to 0x35F* Bottle Contents 0x00* - No Bottle 0x01* - Mushroom 0x02* - Empty Bottle 0x03* - Red Potion 0x04* - Green Potion
+0x05* - Blue Potion 0x06* - Fairy 0x07* - Bee 0x08* - Good Bee
+0x360* to 0x361* Wallet Capacity
+0x362* to 0x363* Rupee Count
+Item Address Bit 0 Bit 1 Bit 2 Bit 3 Bit 4 Bit 5 Bit 6 Bit 7
+Compass1 0x364* Unused Unused Ganon's Tower Turtle Rock Thieves' Town Tower of Hera Ice Palace Skull Woods
+BigKey1 0x366*
+Dungeon Map1 0x368*
+Compass2 0x365* Misery Mire Palace of Darkness Swamp Palace Hyrule Castle Tower Desert Palace Eastern Palace Hyrule Castle Sewer Passage
+BigKey2 0x367*
+Dungeon Map2 0x369*
+Wishing Pond Rupee: 0x36A*
+
+Presumed unused
+Heart Pieces collected:0x36B\*
+
+Number of heart pieces (out of four) you have earned
+Health: 0x36C\*
+
+Health Capacity. Each increment of 0x08* is worth one heart.
+0x04* is a half heart. The max is generally 0xA0*. The game is coded to not accept health values beyond this.
+$36D. Actual Health. Same as above, but this reflects your current health status rather than potential.
+Magic Power: 0x36E*
+
+Magic power ranges from 0x00* to 0x80*. Each small bottle refills 0x10*. Setting Magic above 0x80* causes the magic meter to glitch and you can't use special items.
+Small Keys: 0x36F\*
+
+Number of Keys you have in the dungeon you are currently in. If you're in a non-keyed dungeon it will generally read 0xFF*.
+Bomb Capacity Upgrades: 0x370*
+
+Number of bombs you can hold above the default value (10).
+Arrow Capacity Upgrades: 0x371\*
+
+Number of arrows you can hold above the default value (30)
+Hearts Filler: 0x372\*
+
+Write to this location to fill in a set number of hearts. Make sure to write in a multiple of 0x08* Otherwise, you will end up filling the whole life meter.
+Magic Filler: 0x373*
+
+Write to this location how much magic power you want filled up. The maximum effective value is 0x80*.
+Pendants: 0x374*
+
+- - - - - g b r
+
+r - Red Pendant
+b - Blue Pendant
+g - Green Pendant
+Bomb filler: 0x375\*
+
+Number of bombs to be "filled" or added to the current bomb count. It will not exceed your maximum, defined at 0x370*.
+Arrow filler: 0x376*
+
+Number of arrows to be "filled" or added to the current arrow count. It will not exceed your maximum, defined at MemoryAddress/PC|371}}.
+Arrows: 0x377\*
+
+Unknown: 0x378\*
+
+Presumed unused.
+Ability Flags: 0x379\*
+
+- r t - p d s -
+
+s - Swim
+d - Run / Dash
+p - Pull
+t - Talk
+r - Read
+Crystals: 0x37A\*
+
+- 3 4 2 7 5 1 6
+
+Magic Consumption: 0x37B\*
+
+0x00* = Normal Consumption
+0x01* = 1/2 Consumption (1/2 Magic)
+0x02\* = 1/4 Consumption (1/4 Magic)
+Keys earned per dungeon:
+
+Sewer Passage: 0x37C*
+Hyrule Castle: 0x37D*
+Note: The Sewers and Hyrule Castle addresses will generally hold the same value and increment/decrement together in randomizer.
+Eastern Palace: 0x37E*
+Desert Palace: 0x37F*
+Hyrule Castle Tower: 0x380*
+Swamp Palace: 0x381*
+Palace of Darkness: 0x382*
+Misery Mire: 0x383*
+Skull Woods: 0x384*
+Ice Palace: 0x385*
+Tower of Hera: 0x386*
+Thieves' Town: 0x387*
+Turtle Rock: 0x388*
+Ganon's Tower: 0x389*
+Unused: 0x38A*
+Unused: 0x38B*
+Inventory Item Tracking: 0x38C\*
+
+b r m p n s k f
+
+b - Blue Boomerang
+r - Red Boomerang
+m - Mushroom Current
+p - Magic Powder
+n - Mushroom Past (turned in to the Witch)
+s - Shovel
+k - Inactive Flute
+f - Active Flute
+Inventory Bow Tracking: 0x38E\*
+
+b s p - - - - -
+
+b - Bow
+s - Silver Arrow Bow
+p - Second Progressive Bow
+There are two Progressive Bow items in the game. The p bit represents whether the player has collected the "second" Progressive Bow independent of the "first." It does not indicate whether the player has silver arrows or not.
+
+Item Limit Counts: 0x390* - 0x392*
+
+Used to keep track of item limits for non-progressive items such as the lamp and capacity upgrades.
+Note: See ItemSubstitutionRules in tables.asm
+Progress Indicator: 0x3C5\*
+
+Note: The first three values here are used in Standard Mode.
+0x00* = Link is in bed, can't use sword.
+0x01* = Have picked up the Uncle item.
+0x02* = Indicates that Zelda is rescued.
+0x03* = Indicates Agahnim 1 is defeated.
+0x04* and above are meaningless. Though, you could write code using them to expand the event system perhaps.
+Progress Flags: 0x3C6*
+
+? ? ? u ? z ? s
+
+s - Set when you obtain the item from Uncle in the Secret Passage.
+u - Set when uncle leaves in Standard Mode.
+? - Uncertain. The sixth and fourth bits (from the right) are sometimes set in Open Mode.
+Map Icons Indicator 2: 0x3C7\*
+
+Presumed unused in randomizer.
+Starting Entrance to use: 0x3C8\*
+
+0x00* = Start the game in Link's House always.
+0x01* = Staring location menu or Pyramid of Power if Aga has been killed and the player has the Mirror.
+0x02* = Start in Zelda's Cell.
+0x03* = Secret Passage or Hyrule Castle front entrance if you've entered the castle.
+0x04* = Castle Throne Room in Standard mode. Set when you touch the mantle.
+0x05* = Start in the Old Man Cave with the Old Man.
+Progress Indicator 3 (bitwise): 0x3C9\*:
+
+- - b p s - m h
+
+h - Hobo gave you his item.
+m - Bottle Merchant gave you his item.
+s - Stumpy (DW) has been arborated
+p - Purple Chest has been opened
+b - Blacksmith's partner saved
+Note: The eighth bit was used in vanilla to indicate that the blacksmiths had your sword.
+Lightworld / Darkworld: 0x3CA\*
+
+The seventh bit here is a toggle indicating if you are in the Dark World (0x40*) or not (0x00*)
+Unused: 0x3CB\*
+
+Presumed unused.
+Follower: 0x3CC\*
+
+Tagalong Indicator (who is following you, if anyone?) (value based)
+Note: Don't use a value of 0x0F\* or larger here, as it will likely crash the game.
+
+0x00* = No follower
+0x01* = Princess Zelda
+0x04* = Old Man
+0x06* = Blind Maiden
+0x07* = Blacksmith Frog
+0x08* = Blacksmith Dwarf
+0x09* = Locksmith next to the sign East of the desert.
+0x0A* = Kiki
+0x0C* = Purple Chest
+0x0D* = Super Bomb
+Y-Coordinate of Dropped Follower: 0x3CD* - 0x3CE*
+
+Cached Y coordinate of follower after it has been lost by the player.
+X-Coordinate of Dropped Follower: 0x3CF* - 0x3D0*
+
+Cached X coordinate of follower after it has been lost by the player.
+Dropped Follower Indoors: 0x3D1\*
+
+Set to 0x01* if a follower has been dropped indoors, otherwise set to 0x00*
+Big bomb uses this value and does not count down or explode if dropped indoors.
+
+Dropped Follower Layer: 0x3D2\*
+
+Set to 0x01* if a follower has been dropped on the lower layer. 0x00* if dropped on the upper layer.
+Follower Dropped: 0x3D3\*
+
+Set to 0x00* normally. Set to 0x80* if a follower such as the Super Bomb has been dropped.
+Unknown: 0x3D4* to 0x3D8*
+
+Presumed unused.
+Player's Name (first four characters): 0x3D9* to 0x3E0*
+
+The randomizer base ROM does not use the 2nd and 3rd save files, so the player can use all 12 characters for their name. The first four are here. The remaining characters can be found in two locations: immediately after the following validity value and at 0x500* - 0x50F*
+Note each of the six letters is represented by a 16-bit number.
+See Appendix 1[Appendix 1 1]
+Validity of the File: 0x3E1* to 0x3E2*
+
+There is a subroutine in the ROM that checks to make sure this word value is 0x55AA*. If changed, the save file will be deleted when the game boots.
+Player's Name (characters 6-12) 0x3E3* to 0x3F0\*
+
+Characters 6-12 of the file name. Note that the above validity value occupies the space where the 5th character would be if the full name were present here.
+See Appendix 1[Appendix 1 2]
+Rando Specific Assignments & Game Stats: 0x3F1* to 0x4FD*
+Unknown: 0x3F1* to 0x3FE*
+
+Presumed unused
+Life/Save Counter: 0x3FF* to 0x400*
+
+Counts the number of times your saved or died in the game before you beat it.
+Post-Game Death Counter: 0x401* to 0x402*
+
+When you start the game this is written to with the value -1 (0xFFFF*). On the game select screen, it will only display a number if this is not 0xFFFF*. The max displayable number is 999.
+When you beat the game, the number of times you died gets recorded here.
+
+NPC Flags These flags are set when the player has collected the item from an NPC or a few other non-chest locations in the world.
+
+NPC Flags 1: 0x410\*
+
+l - c s t k z o
+
+l - Library Item
+c - Catfish
+s - Sahasrahla
+t - Stumpy (Tree Kid)
+k - Sick Kid
+z - King Zora
+o - Old Man
+NPC Flags 2: 0x411\*
+
+b - p m f s b e
+
+b - Magic Bat
+p - Powder (in Potion Shop)
+m - Mushroom (in Lost Woods)
+f - Fairy (possibly unused in randomizer?)
+s - Smith
+b - Bombos Tablet
+e - Ether Tablet
+Map Overlay: 0x414* to 0x415*
+
+General Flags: 0x416\*
+
+s s h c p i - g
+
+s - Progressive Shields
+h - HUD flag (?)
+c - Shame Chest (no longer in the game it seems)
+p - Force pyramid (seems unused)
+i - Ignore faeries, related to fake flipper insta-kill
+g - Has Grove item (somehow related to heart pieces and containers)
+Highest Sword Level: 0x417\*
+
+- - - - - s s s
+
+Goal Item Counter: 0x418\*
+
+Counts goal items for e.g. Triforce Hunt.
+Service Sequence: 0x419\*
+
+Reserved for services using an outside interface which might need to persist through save and quit.
+Programmable Item #1: 0x41A* - 0x41B*
+
+Programmable Item #2: 0x41C* - 0x41D*
+
+Programmable Item #3: 0x41E* - 0x41F*
+
+Unused in regular ALTTPR Roms but reserved for programmable item data (e.g. in festive ROMs.)
+Bonk Counter: 0x420\*
+
+Counts a maximum of 99 bonks
+A/Y Items: 0x421\*
+
+y y y y y a a a
+
+y - Y item count represented as five bit integer. There are a total of 27 Y items.
+a - A item count represented as a three bit integer. Five in total.
+Swords & Shields: 0x422\*
+
+w w w h h - - -
+
+Number of swords and shields collected represented as three and two bit integers respectively.
+w - Swords
+h - Shields
+Total Items Collected: 0x423\*
+
+Mails & Small Keys: 0x424\*
+
+m m k k k k k k
+
+Number of mails and small keys collected represented as two and six bit integers respectively.
+m - Mails
+k - Small Keys
+Tempered & Gold Sword Boss Kills: 0x425\*
+
+t t t t g g g g
+
+Fighter & Master Sword Boss Kills: 0x426\*
+
+f f f f m m m m
+
+Number of bosses killed with each sword represented as four byte integers.
+t - Tempered Sword
+g - Gold Sword
+f - Fighter Sword
+m - Master Sword
+Big Keys & Big Chests: 0x427\*
+
+k k k k c c c c
+
+Number of big keys collected and big chests opened represented as four bit integers.
+k - Big Keys
+c - Big Chests
+Maps & Compasses: 0x428\*
+
+m m m m c c c c
+
+Number of maps and compasses collected represented as four bit integers.
+m - Maps
+c - Compasses
+Heart Containers & Pendants: 0x429\*
+
+h h h h - - p p
+
+Number of heart pieces and pendants collected represented as four and two bit integers respectively.
+h - Heart Pieces
+c - Pendants
+Ganon's Tower Big Key: 0x42A\*
+
+b - s c c c c c
+
+b - Bomb acquired
+s - Silver Arrows Acquired
+c Locations checked in Ganon's Tower up to and including the Big Key represented as a five bit integer.
+Rupees Spent: 0x42B* - 0x42C*
+
+Number of rupees spent in game.
+Save and Quits: 0x42D\*
+
+Number of times the player has saved and quit.
+Loop Time: 0x42E* - 0x431*
+
+Total loop time (?) measured in frames.
+Used in calculating the lag time.
+Locations Pre-Boots: 0x432\*
+
+Number of locations checked before the Pegasus Boots are found.
+Locations Pre-Mirror: 0x433\*
+
+Number of locations checked before the Magic Mirror is found.
+Hyrule Castle & Palace of Darkness: 0x434\*
+
+h h h h p p p p
+
+Locations checked in Hyrule Castle and Palace of Darkness represented as four bit integers.
+h - Hyrule Castle
+p - Palace of Darkness
+Desert Palace, Tower of Hera, and Agahnim's Tower: 0x435\*
+
+d d h h a a a a
+
+Locations checked in Desert Palace, Tower of Hera, and Agahnim's Tower represented as three, three, and two bit integers respectively.
+d - Desert Palace
+h - Tower of Hera
+a - Agahnim's Tower
+Ganon's Tower & Eastern Palace: 0x436\*
+
+g g g g g e e e
+
+Locations checked in Ganon's Tower and Eastern Palace represented as five and three bit integers respectively.
+g - Ganon's Tower
+e - Eastern Palace
+Skull Woods & Thieves' Town: 0x437\*
+
+s s s s t t t t
+
+Locations checked in Skull Woods & Thieves' Town represented as four bit intgers.
+s - Skull Woods
+t - Thieves' Town
+Ice Palace & Misery Mire: 0x438\*
+
+i i i i m m m m
+
+Locations checked in Ice Palace and Misery Mire represented as four bit intgers.
+i - Ice Palace
+m - Misery Mire
+Turtle Rock & Swamp Palace: 0x439\*
+
+t t t t s s s s
+
+Locations checked in Turtle Rock and Swamp Palace represented as four bit intgers.
+t - Turtle Rock
+s - Swamp Palace
+Overworld Mirrors: 0x43A\*
+
+Number of times the Magic Mirror is used on the overworld.
+Underworld Mirrors: 0x43B\*
+
+Number of times the Magic Mirror is used in dungeons.
+Screen Transitions: 0x43C* - 0x43D*
+
+Number of screen transitions.
+Total Time: 0x43E* - 0x441*
+
+Total amount of time played measured in frames.
+Chests Opened: 0x442\*
+
+Number of chests opened. Does not count NPC and free standing items.
+Stats Locked: 0x443\*
+
+Set to 0x01* when the goal has been completed, otherwise remains at 0x00*. After this is set, the game stats (e.g. items collected, in-game time, etc) are "locked" in and do not increment.
+Menu Time: 0x444* - 0x447*
+
+Total amount of time spent in the item menu measured in frames.
+Heart Pieces: 0x448\*
+
+Total number of Heart Pieces collected.
+Deaths: 0x449\*
+
+Total deaths.
+Times Flutes: 0x44B\*
+
+Number of times the active Flute was used.
+Swordless Bosses & Capacity Upgrades: 0x452\*
+
+b b b b c c c c
+
+Number of bosses defeated without a sword and number of capacity upgrades purchased represented as four bit integers.
+b - Bosses killed without a sword
+
+c - Capacity upgrades purchased
+
+Faerie Revivals: 0x453\*
+
+Number of times the player has been revived by a faerie.
+Challenge Timer: 0x454* - 0x457*
+
+Timer used for timed OHKO.
+First Sword Found: 0x458* - 0x45B*
+
+Time when the player collected their first sword, measured in frames.
+Boots Found: 0x45C* - 0x45F*
+
+Time when the player collected the Pegasus Boots, measured in frames.
+Flute Found: 0x460* - 0x463*
+
+Time when the player collected the Flute, measured in frames.
+Mirror Found: 0x464* - 0x467*
+
+Time when the player collected the Magic Mirror, measured in frames.
+Chest Turn Counter: 0x468\*
+
+Unknown: 0x469\*
+
+Presumed unused.
+Damage Counter: 0x46A* - 0x46B*
+
+Damage taken by the player.
+Magic Counter: 0x46C* - 0x46D*
+
+Magic used.
+Unknown: 0x46E* - 0x4DF*
+
+Presumed unused.
+Chest Key Counters: 0x4E0* - 0x4ED*
+
+Each dungeon has one byte in this block of memory that counts how many chest keys have been collected. As in the current key counts, Hyrule Castle and Sewers keys are counted together. Also note that currently the randomizer ROM will never increment the counter for Eastern Palace unless a chest key is manually placed.
+
+Hyrule Castle: 0x4E0*
+Sewers: 0x4E1*
+Eastern Palace: 0x4E2*
+Desert Palace: 0x4E3*
+Agahnim's Tower: 0x4E4*
+Swamp Palace: 0x4E5*
+Palace of Darkness: 0x4E6*
+Misery Mire: 0x4E7*
+Skull Woods: 0x4E8*
+Ice Palace: 0x4E9*
+Tower of Hera: 0x4EA*
+Thieve's Town: 0x4EB*
+Turtle Rock: 0x4EC*
+Ganon's Tower: 0x4ED*
+Unknown: 0x4EF* - 0x4FD*
+
+Presumed unused except for a rando-specific File Marker at 0x4F0*, which will be 0xFF* on an active save file and 0x00* on a fresh file.
+Checksum: 0x4FE* - 0x4FF*
+Inverse Checksum: 0x4FE* to 0x4FF\*
+
+The SRAM save loading routine relies upon an "inverse" checksum. Changes to any byte in the SRAM between 0x00* and 0x4FE* must be added or subtracted to this checksum or the save file will be deleted. The checksum can be computed by adding every word between the beginning of the file and 0x4FE* (exclusively) and subtracting the sum from 0x5A5A*, using overflowing arithmetic for both operations.
+
+Player's Name (characters 5-12): 0x500* to 0x50F*
+
+See Appendix 1[Appendix 1 3]
+Unused: 0x510* - 0x1FFF*
+This space previously contained a second and third save file with the same layout as above. Currently unused.
+
+Rom Name: 0x2000* - 0x2014*
+Rom Name: 0x2000* to 0x2014*
+
+Name of the ROM, ASCII encoded. If the ROM was generated by the VT randomizer, this will also contain the hash id used for the permalink.
+Unused: 0x2015* - 0x7FFF*
+The remaining unused, expanded SRAM.
